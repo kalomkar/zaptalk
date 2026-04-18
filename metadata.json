@@ -1,0 +1,6 @@
+{
+  "name": "ZapTalk",
+  "description": "A high-performance, real-time chat application with advanced privacy, customization, and AI features.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": []
+}
