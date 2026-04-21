@@ -13,6 +13,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Loader2, Zap, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserProvider, useUser } from './context/UserContext';
+import { CallProvider } from './context/CallContext';
+import CallingOverlay from './components/CallingOverlay';
 
 function AppContent() {
   const { profile, localContacts, updateProfile, addContact } = useUser();
@@ -106,6 +108,7 @@ function AppContent() {
                 <ChatWindow 
                   chatId={selectedChatId} 
                   localChat={localContacts.find(c => c.id === selectedChatId)}
+                  onDelete={() => setSelectedChatId(null)}
                 />
               </motion.div>
             ) : (
@@ -136,6 +139,7 @@ function AppContent() {
         />
 
         <Toaster position="top-center" />
+        <CallingOverlay />
       </div>
     </TooltipProvider>
   );
@@ -144,7 +148,9 @@ function AppContent() {
 export default function App() {
   return (
     <UserProvider>
-      <AppContent />
+      <CallProvider>
+        <AppContent />
+      </CallProvider>
     </UserProvider>
   );
 }

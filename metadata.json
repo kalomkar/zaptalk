@@ -1,6 +1,6 @@
 {
   "name": "ZapTalk",
-  "description": "A high-performance, real-time chat application with advanced privacy, customization, and AI features.",
+  "description": "Full-stack WhatsApp-style chat app with Phone OTP login, real-time live typing preview, Gemini AI smart replies, and Capacitor Android support.",
   "requestFramePermissions": ["camera", "microphone"],
   "majorCapabilities": []
 }

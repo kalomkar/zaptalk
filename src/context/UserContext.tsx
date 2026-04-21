@@ -2,11 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, Story } from '../types';
 import { auth, db } from '../firebase';
 import { doc, onSnapshot, setDoc, updateDoc, collection, getDoc } from 'firebase/firestore';
+import { io, Socket } from 'socket.io-client';
 
 interface UserContextType {
   profile: UserProfile | null;
   localContacts: any[];
   localStories: Story[];
+  socket: Socket | null;
   updateProfile: (updates: Partial<UserProfile>) => void;
   addContact: (contact: any) => void;
   addStory: (story: Story) => void;
@@ -16,6 +18,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(() => {
     const saved = localStorage.getItem('zap_profile');
     return saved ? JSON.parse(saved) : null;
@@ -55,6 +58,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
+        // Initialize Socket
+        const newSocket = io();
+        newSocket.emit('register-user', user.uid);
+        
+        newSocket.on('user_status_change', async (data) => {
+          const { userId, status, lastSeen } = data;
+          if (userId === user.uid) {
+            // Update my own status in Firestore
+            await updateDoc(doc(db, 'users', userId), {
+              status,
+              lastSeen: lastSeen || Date.now()
+            });
+          }
+        });
+
+        setSocket(newSocket);
+
         // Sync Profile
         const userDoc = doc(db, 'users', user.uid);
         const unsubDoc = onSnapshot(userDoc, (docSnap) => {
@@ -89,9 +109,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
               // Create initial profile if not exists
               const initialProfile: UserProfile = {
                 uid: user.uid,
-                displayName: user.displayName || 'User',
+                displayName: user.displayName || 'New User',
                 email: user.email || '',
                 photoURL: user.photoURL || '',
+                phone: user.phoneNumber || '',
                 status: 'online',
                 lastSeen: Date.now(),
                 bio: 'Hey there! I am using ZapTalk.',
@@ -100,6 +121,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     hideOnlineStatus: false,
                     hideTypingStatus: false,
                     hideReadReceipts: false,
+                    ghostMode: false,
+                    antiDelete: false,
                   },
                   notifications: {
                     messageSounds: true,
@@ -192,6 +215,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profile, 
       localContacts, 
       localStories, 
+      socket,
       updateProfile, 
       addContact, 
       addStory,

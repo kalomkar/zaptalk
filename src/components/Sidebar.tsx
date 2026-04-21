@@ -32,7 +32,9 @@ import {
   Smartphone,
   ArrowLeft,
   Zap,
-  Image
+  Image,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
@@ -46,12 +48,14 @@ export default function Sidebar({ onClose }: { onClose: () => void }) {
   const [updating, setUpdating] = useState(false);
   const [displayName, setDisplayName] = useState(profile?.displayName || '');
   const [bio, setBio] = useState(profile?.bio || 'Available');
+  const [phone, setPhone] = useState(profile?.phone || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.displayName);
       setBio(profile.bio || 'Available');
+      setPhone(profile.phone || '');
     }
   }, [profile]);
 
@@ -81,13 +85,17 @@ export default function Sidebar({ onClose }: { onClose: () => void }) {
     if (!auth.currentUser) return;
     setUpdating(true);
     
+    // Clean phone number but keep '+'
+    const cleanPhone = phone.replace(/[^\d+]/g, '');
+
     // Instant local update
-    updateProfile({ displayName, bio });
+    updateProfile({ displayName, bio, phone: cleanPhone });
 
     try {
       await updateDoc(doc(db, 'users', auth.currentUser.uid), {
         displayName,
-        bio
+        bio,
+        phone: cleanPhone
       });
       toast.success('Profile updated!');
       setView('main');
@@ -129,16 +137,16 @@ export default function Sidebar({ onClose }: { onClose: () => void }) {
   const SettingItem = ({ icon: Icon, title, subtitle, onClick, rightElement }: any) => (
     <button 
       onClick={onClick}
-      className="w-full flex items-center gap-4 p-4 hover:bg-sidebar-accent/50 transition-colors text-left group"
+      className="w-full flex items-center gap-5 p-5 hover:bg-white/5 transition-all text-left group relative overflow-hidden"
     >
-      <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center text-text-dim group-hover:text-accent-primary transition-colors">
-        <Icon className="w-5 h-5" />
+      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-text-dim group-hover:text-accent-primary group-hover:bg-accent-primary/10 transition-all">
+        <Icon className="w-5 h-5 transition-transform group-hover:scale-110" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground">{title}</p>
-        {subtitle && <p className="text-xs text-text-dim truncate">{subtitle}</p>}
+        <p className="text-[15px] font-bold text-foreground tracking-tight">{title}</p>
+        {subtitle && <p className="text-[11px] text-text-dim truncate font-medium">{subtitle}</p>}
       </div>
-      {rightElement || <ChevronRight className="w-4 h-4 text-text-dim" />}
+      {rightElement || <ChevronRight className="w-5 h-5 text-text-dimmer group-hover:text-accent-primary group-hover:translate-x-1 transition-all" />}
     </button>
   );
 
@@ -148,19 +156,34 @@ export default function Sidebar({ onClose }: { onClose: () => void }) {
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-      className="absolute inset-y-0 right-0 w-full md:w-[380px] bg-sidebar border-l border-sidebar-border z-50 flex flex-col shadow-2xl"
+      className="absolute inset-y-0 right-0 w-full md:w-[420px] bg-sidebar/95 backdrop-blur-2xl border-l border-white/5 z-[100] flex flex-col shadow-premium"
     >
       {/* Header */}
-      <div className="p-6 flex items-center gap-4 border-b border-sidebar-border bg-sidebar-accent/30">
+      <div className="p-8 flex items-center gap-6 border-b border-white/5 bg-white/5">
         {view !== 'main' && (
-          <Button variant="ghost" size="icon" onClick={() => setView('main')} className="text-text-dim hover:text-foreground">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setView('main')} 
+            className="w-10 h-10 rounded-xl text-text-dim hover:text-foreground hover:bg-white/5 transition-all active:scale-90"
+          >
             <ArrowLeft className="w-5 h-5" />
           </Button>
         )}
-        <h2 className="text-xl font-bold flex-1">
-          {view === 'main' ? 'Settings' : view.charAt(0).toUpperCase() + view.slice(1)}
-        </h2>
-        <Button variant="ghost" size="icon" onClick={onClose} className="text-text-dim hover:text-foreground">
+        <div className="flex-1">
+          <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-accent-primary mb-1">
+            {view === 'main' ? 'ZapTalk' : 'Settings'}
+          </h2>
+          <h3 className="text-xl font-black text-foreground tracking-tight">
+            {view === 'main' ? 'Profile & Preferences' : view.charAt(0).toUpperCase() + view.slice(1)}
+          </h3>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onClose} 
+          className="w-10 h-10 rounded-xl text-text-dim hover:text-foreground hover:bg-white/5 transition-all"
+        >
           <X className="w-5 h-5" />
         </Button>
       </div>
@@ -170,46 +193,59 @@ export default function Sidebar({ onClose }: { onClose: () => void }) {
           {view === 'main' && (
             <motion.div
               key="main"
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="divide-y divide-sidebar-border/50"
+              exit={{ opacity: 0, x: -30 }}
+              className="divide-y divide-white/5"
             >
               {/* Profile Summary */}
               <button 
                 onClick={() => setView('profile')}
-                className="w-full p-6 flex items-center gap-4 hover:bg-sidebar-accent/50 transition-colors text-left"
+                className="w-full p-8 flex items-center gap-5 hover:bg-white/5 transition-all text-left relative overflow-hidden group"
               >
-                <Avatar className="w-16 h-16 border-2 border-sidebar-accent shadow-lg">
-                  <AvatarImage src={profile?.photoURL} />
-                  <AvatarFallback className="bg-zinc-800 text-zinc-400">{profile?.displayName.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-bold text-foreground truncate">{profile?.displayName}</h3>
-                  <p className="text-sm text-text-dim truncate">{profile?.bio || 'Available'}</p>
+                <div className="absolute inset-0 bg-gradient-to-r from-accent-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative">
+                   <Avatar className="w-20 h-20 border-2 border-white/10 shadow-premium ring-4 ring-white/5 group-hover:ring-accent-primary/20 transition-all">
+                    <AvatarImage src={profile?.photoURL} className="object-cover" />
+                    <AvatarFallback className="bg-sidebar-accent text-accent-primary text-xl font-black">{profile?.displayName.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-accent-primary rounded-full border-4 border-sidebar" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-text-dim" />
+                <div className="flex-1 min-w-0 relative">
+                  <h3 className="text-xl font-black text-foreground truncate tracking-tight">{profile?.displayName}</h3>
+                  <p className="text-sm text-text-dim truncate font-medium">{profile?.bio || 'Available'}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-accent-primary px-2 py-0.5 bg-accent-primary/10 rounded-full">Pro User</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-text-dimmer">@verified</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-6 h-6 text-text-dimmer group-hover:text-accent-primary transition-all" />
               </button>
 
               <div className="py-2">
-                <SettingItem icon={User} title="Account" subtitle="Security notifications, change number" />
-                <SettingItem icon={Lock} title="Privacy" subtitle="Last seen, profile photo, groups" onClick={() => setView('privacy')} />
-                <SettingItem icon={Bot} title="AI Features" subtitle="Reply suggestions, AI assistant" onClick={() => setView('ai')} />
-                <SettingItem icon={Zap} title="AI Key Setup" subtitle="Where to paste your API keys" onClick={() => setView('keys')} />
-                <SettingItem icon={Bell} title="Notifications" subtitle="Message, group & call tones" onClick={() => setView('notifications')} />
-                <SettingItem icon={Palette} title="Theme" subtitle="Dark, light, wallpapers" onClick={() => setView('theme')} />
-                <SettingItem icon={Smartphone} title="Install App" subtitle="How to use ZapTalk on your phone" onClick={() => setView('install')} />
-                <SettingItem icon={HelpCircle} title="Help" subtitle="Help center, contact us, privacy policy" onClick={() => setView('help')} />
+                <SettingItem 
+                  icon={User} 
+                  title="Profile Identity" 
+                  subtitle="Name, BIO, and personal details" 
+                  onClick={() => setView('profile')}
+                />
+                <SettingItem icon={Lock} title="Privacy Vault" subtitle="Encryption, ghost mode, visibility" onClick={() => setView('privacy')} />
+                <SettingItem icon={Bot} title="ZapTalk Intelligence" subtitle="AI Auto-replies, smart chips" onClick={() => setView('ai')} />
+                <SettingItem icon={Zap} title="AI Engine Config" subtitle="Manage your API keys" onClick={() => setView('keys')} />
+                <SettingItem icon={Bell} title="Alerts & Logic" subtitle="Notification behaviors" onClick={() => setView('notifications')} />
+                <SettingItem icon={Palette} title="Aesthetics" subtitle="Interface colors, wallpapers" onClick={() => setView('theme')} />
+                <SettingItem icon={Smartphone} title="Native Integration" subtitle="Install as local application" onClick={() => setView('install')} />
+                <SettingItem icon={HelpCircle} title="Support Center" subtitle="Updates and help guides" onClick={() => setView('help')} />
               </div>
 
-              <div className="p-4">
+              <div className="p-6">
                 <Button 
                   variant="ghost" 
-                  className="w-full text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 justify-start h-12 rounded-xl"
+                  className="w-full text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 justify-center h-14 rounded-2xl font-black uppercase tracking-widest text-xs border border-transparent hover:border-rose-500/20 transition-all"
                   onClick={() => auth.signOut()}
                 >
                   <LogOut className="w-5 h-5 mr-3" />
-                  Sign Out
+                  Terminate Session
                 </Button>
               </div>
             </motion.div>
@@ -221,16 +257,19 @@ export default function Sidebar({ onClose }: { onClose: () => void }) {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="p-6 space-y-8"
+              className="space-y-4"
             >
-              <div className="flex flex-col items-center gap-4">
+              <div className="flex flex-col items-center gap-4 p-8 bg-sidebar">
                 <div className="relative group">
-                  <Avatar className="w-32 h-32 border-4 border-sidebar-accent shadow-2xl">
-                    <AvatarImage src={profile?.photoURL} />
+                  <Avatar className="w-44 h-44 border-4 border-sidebar-accent shadow-2xl ring-1 ring-accent-primary/20">
+                    <AvatarImage src={profile?.photoURL} className="object-cover" />
                     <AvatarFallback className="text-4xl bg-zinc-800 text-zinc-400">{profile?.displayName.charAt(0)}</AvatarFallback>
                   </Avatar>
-                  <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                    <Camera className="w-8 h-8 text-white" />
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <div className="flex flex-col items-center gap-1">
+                      <Camera className="w-8 h-8 text-white" />
+                      <span className="text-[10px] text-white font-bold uppercase tracking-widest">Change</span>
+                    </div>
                     <input type="file" ref={fileInputRef} className="hidden" onChange={handleAvatarChange} accept="image/*" />
                   </label>
                   {updating && (
@@ -239,37 +278,65 @@ export default function Sidebar({ onClose }: { onClose: () => void }) {
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-text-dim">Click to change profile photo</p>
               </div>
 
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-accent-primary uppercase tracking-widest">Your Name</Label>
-                  <div className="flex gap-2">
-                    <Input 
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      className="bg-sidebar-accent border-none h-12 rounded-xl"
-                      placeholder="Enter your name"
-                    />
-                  </div>
-                  <p className="text-[10px] text-text-dim px-1">This is not your username or pin. This name will be visible to your ZapTalk contacts.</p>
+              <div className="bg-sidebar px-6 py-6 pb-20 space-y-8">
+                <div className="space-y-4 border-b border-sidebar-border/30 pb-6">
+                  <Label className="text-xs font-bold text-accent-primary uppercase tracking-widest flex items-center gap-2">
+                    <User className="w-3.5 h-3.5" />
+                    Your Name
+                  </Label>
+                  <Input 
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="bg-sidebar-accent/50 border-none h-12 rounded-xl focus:ring-1 ring-accent-primary"
+                    placeholder="Enter your name"
+                  />
+                  <p className="text-[11px] text-text-dim px-1 leading-relaxed">This is not your username or pin. This name will be visible to your ZapTalk contacts.</p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-accent-primary uppercase tracking-widest">About</Label>
+                <div className="space-y-4 border-b border-sidebar-border/30 pb-6">
+                  <Label className="text-xs font-bold text-accent-primary uppercase tracking-widest flex items-center gap-2">
+                    <Info className="w-3.5 h-3.5" />
+                    About
+                  </Label>
                   <Input 
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
-                    className="bg-sidebar-accent border-none h-12 rounded-xl"
+                    className="bg-sidebar-accent/50 border-none h-12 rounded-xl focus:ring-1 ring-accent-primary"
                     placeholder="Tell us about yourself"
+                  />
+                </div>
+
+                <div className="space-y-4 border-b border-sidebar-border/30 pb-6">
+                  <Label className="text-xs font-bold text-accent-primary uppercase tracking-widest flex items-center gap-2">
+                    <Phone className="w-3.5 h-3.5" />
+                    Phone Number
+                  </Label>
+                  <Input 
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="bg-sidebar-accent/50 border-none h-12 rounded-xl focus:ring-1 ring-accent-primary"
+                    placeholder="+91 98765 43210"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <Label className="text-xs font-bold text-accent-primary uppercase tracking-widest flex items-center gap-2">
+                    <Mail className="w-3.5 h-3.5" />
+                    Email
+                  </Label>
+                  <Input 
+                    value={profile?.email}
+                    disabled
+                    className="bg-sidebar-accent/30 border-none h-12 rounded-xl opacity-60 text-text-dim"
                   />
                 </div>
 
                 <Button 
                   onClick={handleSaveProfile}
-                  disabled={updating || (displayName === profile?.displayName && bio === profile?.bio)}
-                  className="w-full h-12 rounded-xl bg-accent-primary hover:opacity-90 text-white font-bold"
+                  disabled={updating || (displayName === profile?.displayName && bio === profile?.bio && phone === profile?.phone)}
+                  className="w-full h-12 rounded-xl bg-accent-primary hover:opacity-90 text-white font-bold shadow-lg shadow-accent-primary/20"
                 >
                   {updating ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save Profile'}
                 </Button>
@@ -491,6 +558,73 @@ export default function Sidebar({ onClose }: { onClose: () => void }) {
                 <div className="p-4 bg-sidebar-accent rounded-xl">
                   <p className="text-sm font-bold">Terms of Service</p>
                   <p className="text-[10px] text-text-dim mt-1">By using ZapTalk, you agree to respect community guidelines and not engage in spamming.</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {view === 'privacy' && (
+            <motion.div
+              key="privacy"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="p-6 space-y-8"
+            >
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-text-dim">
+                  <Lock className="w-4 h-4" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider">Privacy & Security</h4>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="p-4 bg-accent-primary/10 rounded-2xl border border-accent-primary/20 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-bold text-accent-primary">Ghost Mode</p>
+                        <p className="text-[10px] text-text-dim">Hide online, typing, and read status</p>
+                      </div>
+                      <Switch 
+                        checked={!!profile?.settings?.privacy.ghostMode}
+                        onCheckedChange={(checked) => handleUpdateSettings('settings.privacy.ghostMode', checked)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium">Anti-Delete Messages</p>
+                      <p className="text-[10px] text-text-dim">See messages even after they are deleted</p>
+                    </div>
+                    <Switch 
+                      checked={!!profile?.settings?.privacy.antiDelete}
+                      onCheckedChange={(checked) => handleUpdateSettings('settings.privacy.antiDelete', checked)}
+                    />
+                  </div>
+
+                  <Separator className="bg-sidebar-border/30" />
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium">Last Seen & Online</p>
+                      <p className="text-[10px] text-text-dim">Hide when you were last online</p>
+                    </div>
+                    <Switch 
+                      checked={!!profile?.settings?.privacy.hideOnlineStatus}
+                      onCheckedChange={(checked) => handleUpdateSettings('settings.privacy.hideOnlineStatus', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium">Read Receipts</p>
+                      <p className="text-[10px] text-text-dim">Hide blue ticks for everyone</p>
+                    </div>
+                    <Switch 
+                      checked={!!profile?.settings?.privacy.hideReadReceipts}
+                      onCheckedChange={(checked) => handleUpdateSettings('settings.privacy.hideReadReceipts', checked)}
+                    />
+                  </div>
                 </div>
               </div>
             </motion.div>

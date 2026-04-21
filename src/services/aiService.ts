@@ -1,61 +1,93 @@
-import OpenAI from 'openai';
+import { GoogleGenAI } from "@google/genai";
 
-const GROK_API_KEY = (process.env.GROK_API_KEY || (import.meta as any).env.VITE_GROK_API_KEY || '').trim();
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+const modelName = 'gemini-3-flash-preview';
 
-const openai = new OpenAI({
-  apiKey: GROK_API_KEY,
-  baseURL: 'https://api.x.ai/v1',
-  dangerouslyAllowBrowser: true
-});
+interface ChatMessage {
+  role: 'user' | 'model';
+  parts: { text: string }[];
+}
 
-const DEFAULT_MODEL = 'grok-2-latest'; // Fallback to stable model for suggestions
-const REASONING_MODEL = 'grok-beta'; // Fallback for general chat
-
-export const generateAIResponse = async (message: string) => {
-  if (!GROK_API_KEY || GROK_API_KEY.length < 10) {
-    return 'Grok API key is missing or invalid. Please check your Builder Settings (⚙️).';
+export const generateAIResponse = async (message: string, history: ChatMessage[] = [], personality?: string) => {
+  if (!GEMINI_API_KEY) {
+    return 'Assistant: Gemini AI not available (API key missing).';
   }
 
+  const systemInstruction = `You are ZapTalk AI, a high-end messaging assistant. 
+  Personality: ${personality || "Helpful, concise, and modern."}
+  Style: Use emojis occasionally. Keep responses under 3 sentences unless asked for more.
+  Context: Part of a real-time chat super-app.`;
+
   try {
-    // Try the latest reasoning model requested by the user
-    const response = await openai.chat.completions.create({
-      model: 'grok-beta', // Using grok-beta/grok-2-latest as x.ai usually aliases reasoning here or uses it for general chat
-      messages: [
-        { role: 'user', content: message }
-      ],
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: [...history, { role: 'user', parts: [{ text: message }] }],
+      config: {
+        systemInstruction,
+        temperature: 0.8,
+      }
     });
 
-    return response.choices[0].message.content || 'AI could not generate a response.';
+    return response.text || 'AI could not generate a response.';
   } catch (error: any) {
-    console.error('Grok API Error:', error);
-    
-    if (error.status === 401 || error.status === 400) {
-      return `API Key Error: The key you provided appears to be invalid for x.ai. Please ensure you are using a Grok key starting with 'xai-'. (Current prefix: ${GROK_API_KEY.slice(0, 3)}...)`;
-    }
-    
+    console.error('Gemini API Error:', error);
     return `AI Error: ${error.message || 'Unknown error'}`;
   }
 };
 
-export const generateReplySuggestions = async (lastMessage: string) => {
-  if (!GROK_API_KEY) return [];
+export const summarizeConversation = async (chatMessages: { text: string; sender: string }[]) => {
+  if (!GEMINI_API_KEY) return 'Summary unavailable (API key missing).';
+
+  const textToSummarize = chatMessages.map(m => `${m.sender}: ${m.text}`).join('\n');
+  const prompt = `Summarize the following chat conversation into 3 bullet points showing key takeaways and decisions made:\n\n${textToSummarize}`;
 
   try {
-    const response = await openai.chat.completions.create({
-      model: DEFAULT_MODEL,
-      messages: [
-        { 
-          role: 'system', 
-          content: 'You are a chat assistant. Generate 3 short, natural, one-line reply suggestions for the given message. Return only the suggestions separated by |.' 
-        },
-        { role: 'user', content: lastMessage }
-      ],
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: {
+        systemInstruction: "You are an expert summarizer. Be concise and professional.",
+      }
+    });
+    return response.text || 'Could not summarize.';
+  } catch (error: any) {
+    return 'Error generating summary.';
+  }
+};
+
+export const generateSmartReply = async (context: string) => {
+  if (!GEMINI_API_KEY) return 'Reply generation unavailable.';
+
+  try {
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: [{ role: 'user', parts: [{ text: `Based on the following message, generate 1 natural and clever reply:\n\n${context}` }] }],
+      config: {
+        systemInstruction: "Generate exactly one reply. No other text.",
+      }
+    });
+    return response.text || 'No reply generated.';
+  } catch (error) {
+    return 'Error generating reply.';
+  }
+};
+
+export const generateReplySuggestions = async (lastMessage: string) => {
+  if (!GEMINI_API_KEY) return [];
+
+  try {
+    const response = await ai.models.generateContent({
+      model: modelName,
+      config: {
+        systemInstruction: "Generate exactly 3 short, natural reply suggestions. Return only the suggestions separated by | (pipe).",
+      },
+      contents: [{ role: 'user', parts: [{ text: lastMessage }] }],
     });
 
-    const content = response.choices[0].message.content || '';
+    const content = response.text || '';
     return content.split('|').map(s => s.trim()).filter(s => s.length > 0).slice(0, 3);
   } catch (error) {
-    console.error('Grok API Error:', error);
     return [];
   }
 };

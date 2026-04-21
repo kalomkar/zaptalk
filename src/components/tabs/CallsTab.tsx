@@ -4,12 +4,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Phone, Video, PhoneIncoming, PhoneOutgoing, PhoneMissed, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+import { useCall } from '../../context/CallContext';
+
 export default function CallsTab() {
+  const { startCall } = useCall();
   const mockCalls = [
-    { id: 1, name: 'John Doe', type: 'incoming', time: 'Today, 10:45 AM', video: false },
-    { id: 2, name: 'Jane Smith', type: 'missed', time: 'Yesterday, 8:20 PM', video: true },
-    { id: 3, name: 'ZapTalk AI', type: 'outgoing', time: 'Yesterday, 2:15 PM', video: false },
-    { id: 4, name: 'Alex Johnson', type: 'incoming', time: 'Monday, 11:00 AM', video: false },
+    { id: '1', uid: 'user_1', name: 'John Doe', type: 'incoming', time: 'Today, 10:45 AM', video: false },
+    { id: '2', uid: 'user_2', name: 'Jane Smith', type: 'missed', time: 'Yesterday, 8:20 PM', video: true },
+    { id: '3', uid: 'user_3', name: 'ZapTalk AI', type: 'outgoing', time: 'Yesterday, 2:15 PM', video: false },
   ];
 
   return (
@@ -52,7 +54,12 @@ export default function CallsTab() {
               </div>
             </div>
 
-            <Button variant="ghost" size="icon" className="text-accent-primary hover:bg-accent-primary/10">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-accent-primary hover:bg-accent-primary/10"
+              onClick={() => startCall(call.uid, call.name, `https://api.dicebear.com/7.x/avataaars/svg?seed=${call.name}`, call.video)}
+            >
               {call.video ? <Video className="w-5 h-5" /> : <Phone className="w-5 h-5" />}
             </Button>
           </div>

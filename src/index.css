@@ -1,37 +1,39 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-sans: "Geist Variable", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
-  --color-background: #0f1115;
-  --color-foreground: #e9edef;
+  --color-background: #0b0c0e;
+  --color-foreground: #f0f2f5;
   
-  --color-sidebar: #1a1d23;
-  --color-sidebar-foreground: #e9edef;
-  --color-sidebar-accent: #21252d;
-  --color-sidebar-border: rgba(255, 255, 255, 0.08);
+  --color-sidebar: #121418;
+  --color-sidebar-foreground: #f0f2f5;
+  --color-sidebar-accent: #1c1f26;
+  --color-sidebar-border: rgba(255, 255, 255, 0.05);
   
-  --color-accent-primary: #00a884;
-  --color-accent-secondary: #3d5afe;
+  --color-accent-primary: #00e676; /* Vibrant WhatsApp-ish green */
+  --color-accent-secondary: #00b0ff; /* Modern blue */
   
   --color-bubble-sent: #005c4b;
-  --color-bubble-received: #202c33;
+  --color-bubble-received: #1e242b;
   
-  --color-text-dim: #8696a0;
+  --color-text-dim: #94a3b8;
+  --color-text-dimmer: #64748b;
 }
 
 @layer base {
   * {
-    @apply border-[rgba(255,255,255,0.08)];
+    @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-accent-primary/30;
   }
 }
 
-/* Custom Scrollbar */
+/* Premium Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -39,57 +41,73 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
 }
 
-/* Message Animations */
-.message-enter {
-  animation: message-in 0.2s ease-out;
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes message-in {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* Typing Indicator Animation */
-.typing-dot {
-  animation: typing-bounce 1.4s infinite ease-in-out;
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
-.typing-dot:nth-child(1) { animation-delay: 0s; }
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes typing-bounce {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+.animate-slide-in {
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-.ai-chip {
-  @apply inline-flex items-center bg-accent-secondary/20 text-accent-secondary px-3 py-1 rounded-full text-[12px] font-bold border border-accent-secondary/50 mb-2 self-center;
+/* Glassmorphism Utilities - Simplified for Performance */
+@utility glass {
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.chat-dot-pattern {
-  background-image: radial-gradient(currentColor 0.5px, transparent 0.5px);
+@utility glass-dark {
+  background-color: #0f1115;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Premium Shadows */
+.shadow-premium {
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.4), 0 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.shadow-bubble {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Patterns */
+.bg-dots {
+  background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
   background-size: 24px 24px;
-  opacity: 0.05;
 }
 
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import "react-phone-number-input/style.css";
+
+/* Phone Input Custom Styles */
+.PhoneInput {
+  @apply flex items-center gap-2 w-full px-4 bg-sidebar-accent/50 glass border-none h-14 rounded-2xl transition-all hover:bg-sidebar-accent;
+}
+
+.PhoneInputInput {
+  @apply flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-text-dim text-lg;
+}
 
 @custom-variant dark (&:is(.dark *));
 

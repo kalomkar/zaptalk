@@ -7,11 +7,17 @@ export const encryptMessage = (text: string): string => {
 };
 
 export const decryptMessage = (ciphertext: string): string => {
+  if (!ciphertext) return '';
   try {
     const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
-    return bytes.toString(CryptoJS.enc.Utf8);
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    if (!decrypted && ciphertext) {
+        // If it's not empty but decryption resulted in empty, it's likely not ciphertext or wrong key
+        return ciphertext;
+    }
+    return decrypted || ciphertext;
   } catch (error) {
-    console.error('Decryption failed:', error);
-    return '[Decryption Error]';
+    // If decryption fails completely, return the original text instead of crashing
+    return ciphertext;
   }
 };
