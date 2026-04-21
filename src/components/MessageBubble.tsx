@@ -339,4 +339,4 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({
       </div>
     </motion.div>
   );
-};
+});

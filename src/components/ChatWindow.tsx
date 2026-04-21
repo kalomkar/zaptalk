@@ -100,8 +100,8 @@ interface ChatWindowProps {
 
 import { useUser } from '../context/UserContext';
 import { useCall } from '../context/CallContext';
-import { FixedSizeList as List } from 'react-window';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import * as ReactWindow from 'react-window';
+import * as ReactVirtualizedAutoSizer from 'react-virtualized-auto-sizer';
 
 enum OperationType {
   CREATE = 'create',
@@ -888,7 +888,7 @@ export default function ChatWindow({ chatId, localChat, onDelete }: ChatWindowPr
             <Loader2 className="w-8 h-8 animate-spin text-accent-primary/50" />
           </div>
         ) : (
-          <AutoSizer>
+          <ReactVirtualizedAutoSizer.default>
             {({ height, width }: { height: number, width: number }) => {
               const flatList = [];
               let lastDate = null;
@@ -902,7 +902,7 @@ export default function ChatWindow({ chatId, localChat, onDelete }: ChatWindowPr
               });
 
               return (
-                <List
+                <ReactWindow.FixedSizeList
                   height={height}
                   width={width}
                   itemCount={flatList.length}
@@ -941,10 +941,10 @@ export default function ChatWindow({ chatId, localChat, onDelete }: ChatWindowPr
                       </div>
                     );
                   }}
-                </List>
+                </ReactWindow.FixedSizeList>
               );
             }}
-          </AutoSizer>
+          </ReactVirtualizedAutoSizer.default>
         )}
       </div>
 
