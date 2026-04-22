@@ -100,8 +100,8 @@ interface ChatWindowProps {
 
 import { useUser } from '../context/UserContext';
 import { useCall } from '../context/CallContext';
-import * as ReactWindow from 'react-window';
-import * as ReactVirtualizedAutoSizer from 'react-virtualized-auto-sizer';
+import { List } from 'react-window';
+import { AutoSizer } from 'react-virtualized-auto-sizer';
 
 enum OperationType {
   CREATE = 'create',
@@ -215,7 +215,6 @@ export default function ChatWindow({ chatId, localChat, onDelete }: ChatWindowPr
       handleFirestoreError(error, OperationType.GET, `chats/${chatId}`);
     });
 
-    // Fetch messages
     const q = query(
       collection(db, 'chats', chatId, 'messages'),
       orderBy('timestamp', 'asc'),
@@ -868,7 +867,7 @@ export default function ChatWindow({ chatId, localChat, onDelete }: ChatWindowPr
 
       {/* Messages Area */}
       <div 
-        className="flex-1 relative overflow-hidden"
+        className="flex-1 relative"
         style={{
           backgroundImage: profile?.settings?.customization.wallpaper && profile.settings.customization.wallpaper !== 'none' 
             ? `url(${profile.settings.customization.wallpaper})` 
@@ -883,12 +882,12 @@ export default function ChatWindow({ chatId, localChat, onDelete }: ChatWindowPr
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] pointer-events-none" />
         )}
         
-        {loading ? (
+         {loading ? (
           <div className="flex-1 flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-accent-primary/50" />
           </div>
         ) : (
-          <ReactVirtualizedAutoSizer.default>
+          <AutoSizer>
             {({ height, width }: { height: number, width: number }) => {
               const flatList = [];
               let lastDate = null;
@@ -902,7 +901,7 @@ export default function ChatWindow({ chatId, localChat, onDelete }: ChatWindowPr
               });
 
               return (
-                <ReactWindow.FixedSizeList
+                <List
                   height={height}
                   width={width}
                   itemCount={flatList.length}
@@ -941,10 +940,10 @@ export default function ChatWindow({ chatId, localChat, onDelete }: ChatWindowPr
                       </div>
                     );
                   }}
-                </ReactWindow.FixedSizeList>
+                </List>
               );
             }}
-          </ReactVirtualizedAutoSizer.default>
+          </AutoSizer>
         )}
       </div>
 
